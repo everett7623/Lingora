@@ -1,0 +1,21 @@
+# Local editor and OS files
+.idea/
+.vscode/
+.cursor/
+.DS_Store
+Thumbs.db
+
+# Local tooling state
+.codex/
+*.log
+*.tmp
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Generated release artifact
+/lingora.zip
+/lingora-*.zip
+/Lingora.zip
