@@ -63,7 +63,7 @@ class Lingora_Gettext {
 		if ( self::$busy ) {
 			return $text;
 		}
-		if ( is_admin() && ! wp_doing_ajax() ) {
+		if ( ! did_action( 'wp' ) || ! Lingora_Content::is_public_request() ) {
 			return $text;
 		}
 		if ( 'lingora' === $domain ) {
@@ -82,10 +82,20 @@ class Lingora_Gettext {
 		}
 
 		self::$busy = true;
-		$map        = $this->translator->resolve( array( $text ), $this->languages->current(), 'gettext:' . $domain, false );
-		self::$busy = false;
-
-		$out                  = $map[ $hash ] ?? $text;
+		try {
+			if ( Lingora_Content::can_collect_request() ) {
+				$map = $this->translator->resolve( array( $text ), $this->languages->current(), 'gettext:' . $domain, false );
+				$out = $map[ $hash ] ?? $text;
+			} else {
+				$rows = lingora()->db->map_for_language( array( $hash ), $this->languages->current() );
+				$out  = $rows[ $hash ]['translated'] ?? $text;
+			}
+			$out = '' !== $out ? wp_kses_post( $out ) : $text;
+		} catch ( Throwable $e ) {
+			$out = $text;
+		} finally {
+			self::$busy = false;
+		}
 		$this->cache[ $hash ] = $out;
 		return $out;
 	}

@@ -1,6 +1,6 @@
 <?php
 /**
- * TranslatePress-style HTML walker.
+ * Translate rendered text and safe presentation attributes.
  *
  * @package Lingora
  */
@@ -14,207 +14,200 @@ class Lingora_Html {
 		'script', 'style', 'code', 'pre', 'textarea', 'svg', 'noscript',
 		'iframe', 'kbd', 'samp', 'math', 'template',
 	);
-
 	private const ATTRS = array( 'alt', 'title', 'placeholder', 'aria-label', 'aria-placeholder' );
+	private const META_NAMES = array( 'description', 'og:title', 'og:description', 'twitter:title', 'twitter:description' );
+	private const NO_WRAPPER = array( 'title', 'option', 'optgroup', 'head' );
 
 	private Lingora_Translator $translator;
 	private Lingora_Languages $languages;
+	private Lingora_Options $options;
+	private Lingora_Db $db;
+	private array $exclude_classes = array();
+	private array $exclude_ids = array();
+	private array $exclude_tags = array();
 
-	public function __construct( Lingora_Translator $translator, Lingora_Languages $languages ) {
+	public function __construct( Lingora_Translator $translator, Lingora_Languages $languages, ?Lingora_Options $options = null, ?Lingora_Db $db = null ) {
 		$this->translator = $translator;
 		$this->languages  = $languages;
+		$this->options    = $options ?? new Lingora_Options();
+		$this->db         = $db ?? new Lingora_Db();
 	}
 
-	public function translate( string $html, string $language, string $source = '', bool $wrap_editor = false ): string {
+	/** @return list<string> */
+	public function extract( string $html ): array {
+		$dom = $this->document( $html );
+		if ( ! $dom ) {
+			return array();
+		}
+		$this->prime_exclusions();
+		$nodes = array();
+		$texts = array();
+		$this->collect( $dom->documentElement, $nodes, $texts );
+		return array_values( array_unique( $texts ) );
+	}
+
+	public function translate( string $html, string $language, string $source = '', bool $wrap_editor = false, bool $force = false ): string {
 		$store_only = $this->languages->is_default( $language ) && ! $wrap_editor;
-
-		$previous = libxml_use_internal_errors( true );
-		$dom      = new DOMDocument( '1.0', 'UTF-8' );
-		$loaded   = $dom->loadHTML( '<?xml encoding="UTF-8">' . $html, LIBXML_HTML_NODEFDTD );
-		libxml_clear_errors();
-		libxml_use_internal_errors( $previous );
-
-		if ( ! $loaded ) {
+		$dom        = $this->document( $html );
+		if ( ! $dom ) {
 			return $html;
 		}
-
+		$this->prime_exclusions();
 		$nodes = array();
 		$texts = array();
 		$this->collect( $dom->documentElement, $nodes, $texts );
 
-		if ( $texts ) {
-			$map = $this->translator->resolve( $texts, $language, $source, ! $wrap_editor && ! $store_only );
-		} else {
-			$map = array();
+		$map = array();
+		if ( $texts && Lingora_Content::can_collect_request() ) {
+			$map = $this->translator->resolve( $texts, $language, $source, ! $wrap_editor && ! $store_only && ! $force );
 		}
-
+		$hashes = array_values( array_unique( array_map( array( $this->db, 'hash' ), $texts ) ) );
+		$rows   = $hashes ? $this->db->map_for_language( $hashes, $language ) : array();
+		if ( $force && ! $this->languages->is_default( $language ) ) {
+			$known = array_map( static fn( $row ) => (string) $row['original'], $rows );
+			$this->translator->enqueue_originals( array_values( $known ), $language, $source, true );
+		}
 		if ( $store_only ) {
 			return $html;
 		}
 
-		if ( ! $texts ) {
-			return $this->finalize( $dom, $html, $language );
-		}
-
 		foreach ( $nodes as $item ) {
-			$hash = lingora()->db->hash( $item['text'] );
-			$translated = $map[ $hash ] ?? $item['text'];
+			$hash       = $this->db->hash( $item['text'] );
+			$row        = $rows[ $hash ] ?? null;
+			$translated = $this->languages->is_default( $language ) ? $item['text'] : ( $row['translated'] ?? $map[ $hash ] ?? $item['text'] );
+			if ( '' === $translated ) {
+				$translated = $item['text'];
+			}
 			if ( 'text' === $item['type'] ) {
-				if ( $wrap_editor ) {
-					$row = lingora()->db->get_string_by_hash( $hash );
-					$this->wrap_text_node( $item['node'], $hash, $translated, $row ? (int) $row->id : 0 );
-					continue;
+				if ( $wrap_editor && $row && ! in_array( strtolower( $item['node']->parentNode->nodeName ?? '' ), self::NO_WRAPPER, true ) ) {
+					$this->wrap_text_node( $item['node'], $hash, $translated, (int) $row['id'], (string) $row['original'] );
+				} else {
+					$item['node']->data = $this->keep_edge_space( $item['text'], $translated );
 				}
-				$item['node']->nodeValue = $translated;
 			} else {
 				$item['node']->setAttribute( $item['attr'], $translated );
-				if ( $wrap_editor ) {
-					$item['node']->setAttribute( 'data-lingora-hash', $hash );
+				if ( $wrap_editor && $row ) {
+					$existing = json_decode( $item['node']->getAttribute( 'data-lingora-attrs' ), true );
+					$attrs    = is_array( $existing ) ? $existing : array();
+					$attrs[]  = array(
+						'id'         => (int) $row['id'],
+						'hash'       => $hash,
+						'attr'       => $item['attr'],
+						'original'   => (string) $row['original'],
+						'translated' => $translated,
+					);
+					$item['node']->setAttribute( 'data-lingora-attrs', (string) wp_json_encode( $attrs ) );
 				}
 			}
 		}
-
 		return $this->finalize( $dom, $html, $language );
 	}
 
-	/**
-	 * @param list<array<string, mixed>> $nodes
-	 * @param list<string>               $texts
-	 */
+	private function document( string $html ): ?DOMDocument {
+		if ( ! class_exists( 'DOMDocument' ) || '' === trim( $html ) ) {
+			return null;
+		}
+		$previous = libxml_use_internal_errors( true );
+		try {
+			$dom    = new DOMDocument( '1.0', 'UTF-8' );
+			$loaded = $dom->loadHTML( '<?xml encoding="UTF-8">' . $html, LIBXML_HTML_NODEFDTD | LIBXML_NONET );
+			return $loaded ? $dom : null;
+		} finally {
+			libxml_clear_errors();
+			libxml_use_internal_errors( $previous );
+		}
+	}
+
 	private function collect( ?DOMNode $node, array &$nodes, array &$texts ): void {
 		if ( ! $node ) {
 			return;
 		}
-		if ( XML_ELEMENT_NODE === $node->nodeType ) {
+		if ( $node instanceof DOMElement ) {
 			$tag = strtolower( $node->nodeName );
-			if ( in_array( $tag, self::SKIP_TAGS, true ) ) {
+			if ( in_array( $tag, self::SKIP_TAGS, true ) || $this->should_skip_element( $node ) ) {
 				return;
 			}
-			if ( $node instanceof DOMElement && $this->should_skip_element( $node ) ) {
-				return;
+			$attributes = self::ATTRS;
+			if ( 'meta' === $tag ) {
+				$name = strtolower( $node->getAttribute( 'name' ) ?: $node->getAttribute( 'property' ) );
+				if ( in_array( $name, self::META_NAMES, true ) ) {
+					$attributes[] = 'content';
+				}
 			}
-			if ( $node instanceof DOMElement ) {
-				foreach ( self::ATTRS as $attr ) {
-					if ( $node->hasAttribute( $attr ) ) {
-						$value = $node->getAttribute( $attr );
-						if ( Lingora_Translator::is_translatable( $value ) ) {
-							$nodes[] = array(
-								'type' => 'attr',
-								'node' => $node,
-								'attr' => $attr,
-								'text' => $value,
-							);
-							$texts[] = $value;
-						}
-					}
-				}
-				if ( 'meta' === $tag ) {
-					$name = strtolower( $node->getAttribute( 'name' ) . ' ' . $node->getAttribute( 'property' ) );
-					if ( str_contains( $name, 'description' ) || str_contains( $name, 'title' ) || str_contains( $name, 'og:' ) ) {
-						$value = $node->getAttribute( 'content' );
-						if ( Lingora_Translator::is_translatable( $value ) ) {
-							$nodes[] = array(
-								'type' => 'attr',
-								'node' => $node,
-								'attr' => 'content',
-								'text' => $value,
-							);
-							$texts[] = $value;
-						}
-					}
-				}
-				if ( in_array( $tag, array( 'input', 'button' ), true ) && in_array( strtolower( $node->getAttribute( 'type' ) ?: 'submit' ), array( 'submit', 'button', 'reset' ), true ) ) {
-					$value = $node->getAttribute( 'value' );
-					if ( Lingora_Translator::is_translatable( $value ) ) {
-						$nodes[] = array(
-							'type' => 'attr',
-							'node' => $node,
-							'attr' => 'value',
-							'text' => $value,
-						);
-						$texts[] = $value;
-					}
+			if ( 'input' === $tag && in_array( strtolower( $node->getAttribute( 'type' ) ), array( 'submit', 'button', 'reset' ), true ) ) {
+				$attributes[] = 'value';
+			}
+			foreach ( $attributes as $attr ) {
+				$value = $node->getAttribute( $attr );
+				if ( Lingora_Translator::is_translatable( $value ) ) {
+					$nodes[] = array( 'type' => 'attr', 'node' => $node, 'attr' => $attr, 'text' => $value );
+					$texts[] = $value;
 				}
 			}
 		}
-
-		if ( XML_TEXT_NODE === $node->nodeType ) {
-			$text = $node->nodeValue ?? '';
+		if ( $node instanceof DOMText ) {
+			$text = $node->data;
 			if ( Lingora_Translator::is_translatable( $text ) ) {
-				$nodes[] = array(
-					'type' => 'text',
-					'node' => $node,
-					'text' => $text,
-				);
+				$nodes[] = array( 'type' => 'text', 'node' => $node, 'text' => $text );
 				$texts[] = $text;
 			}
 			return;
 		}
-
-		if ( $node->hasChildNodes() ) {
-			foreach ( iterator_to_array( $node->childNodes ) as $child ) {
-				$this->collect( $child, $nodes, $texts );
-			}
+		foreach ( iterator_to_array( $node->childNodes ) as $child ) {
+			$this->collect( $child, $nodes, $texts );
 		}
 	}
 
 	private function should_skip_element( DOMElement $el ): bool {
-		$class = ' ' . $el->getAttribute( 'class' ) . ' ';
-		if ( str_contains( $class, ' notranslate ' ) || str_contains( $class, ' lingora-skip ' ) ) {
+		$class = ' ' . ( preg_replace( '/\s+/u', ' ', trim( $el->getAttribute( 'class' ) ) ) ?? '' ) . ' ';
+		$id    = $el->getAttribute( 'id' );
+		if ( str_contains( $class, ' notranslate ' ) || str_contains( $class, ' lingora-skip ' ) || 'no' === strtolower( $el->getAttribute( 'translate' ) ) || $el->hasAttribute( 'data-no-translation' ) ) {
 			return true;
 		}
-		if ( 'true' === $el->getAttribute( 'translate' ) ) {
-			return false;
-		}
-		if ( 'no' === $el->getAttribute( 'translate' ) ) {
+		if ( in_array( $id, array( 'wpadminbar', 'wp-admin-bar-root', 'lingora-editor' ), true ) ) {
 			return true;
 		}
-		if ( $el->hasAttribute( 'data-no-translation' ) ) {
-			return true;
+		foreach ( $this->exclude_classes as $token ) {
+			if ( str_contains( $class, $token ) ) {
+				return true;
+			}
 		}
-		$id = $el->getAttribute( 'id' );
-		if ( in_array( $id, array( 'wpadminbar', 'wp-admin-bar-root' ), true ) ) {
-			return true;
-		}
-		return $this->matches_exclude_selector( $el, $class, $id );
+		return ( '' !== $id && in_array( $id, $this->exclude_ids, true ) ) || in_array( strtolower( $el->nodeName ), $this->exclude_tags, true );
 	}
 
-	private function matches_exclude_selector( DOMElement $el, string $class, string $id ): bool {
-		$raw = (string) lingora()->options->get( 'exclude_selectors', '' );
-		if ( '' === trim( $raw ) ) {
-			return false;
-		}
-		foreach ( explode( ',', $raw ) as $selector ) {
+	private function prime_exclusions(): void {
+		$this->exclude_classes = array();
+		$this->exclude_ids     = array();
+		$this->exclude_tags    = array();
+		foreach ( explode( ',', (string) $this->options->get( 'exclude_selectors', '' ) ) as $selector ) {
 			$selector = trim( $selector );
 			if ( '' === $selector ) {
 				continue;
 			}
 			if ( str_starts_with( $selector, '.' ) ) {
-				$token = ' ' . ltrim( $selector, '.' ) . ' ';
-				if ( str_contains( $class, $token ) ) {
-					return true;
-				}
-				continue;
-			}
-			if ( str_starts_with( $selector, '#' ) && $id === ltrim( $selector, '#' ) ) {
-				return true;
-			}
-			if ( strtolower( $el->nodeName ) === strtolower( $selector ) ) {
-				return true;
+				$this->exclude_classes[] = ' ' . substr( $selector, 1 ) . ' ';
+			} elseif ( str_starts_with( $selector, '#' ) ) {
+				$this->exclude_ids[] = substr( $selector, 1 );
+			} else {
+				$this->exclude_tags[] = strtolower( $selector );
 			}
 		}
-		return false;
 	}
 
-	private function wrap_text_node( DOMText $node, string $hash, string $translated, int $string_id ): void {
+	private function keep_edge_space( string $original, string $translated ): string {
+		preg_match( '/^\s*/u', $original, $leading );
+		preg_match( '/\s*$/u', $original, $trailing );
+		$core = preg_replace( '/^\s+|\s+$/u', '', $translated ) ?? $translated;
+		return ( $leading[0] ?? '' ) . $core . ( $trailing[0] ?? '' );
+	}
+
+	private function wrap_text_node( DOMText $node, string $hash, string $translated, int $string_id, string $original ): void {
 		$span = $node->ownerDocument->createElement( 'span' );
 		$span->setAttribute( 'class', 'lingora-node' );
 		$span->setAttribute( 'data-lingora-hash', $hash );
-		$span->setAttribute( 'data-lingora-original', $node->nodeValue ?? '' );
-		if ( $string_id ) {
-			$span->setAttribute( 'data-lingora-id', (string) $string_id );
-		}
-		$span->appendChild( $node->ownerDocument->createTextNode( $translated ) );
+		$span->setAttribute( 'data-lingora-original', $original );
+		$span->setAttribute( 'data-lingora-id', (string) $string_id );
+		$span->appendChild( $node->ownerDocument->createTextNode( $this->keep_edge_space( $node->data, $translated ) ) );
 		$node->parentNode?->replaceChild( $span, $node );
 	}
 
@@ -222,15 +215,9 @@ class Lingora_Html {
 		$html_el = $dom->getElementsByTagName( 'html' )->item( 0 );
 		if ( $html_el instanceof DOMElement ) {
 			$html_el->setAttribute( 'lang', str_replace( '_', '-', $this->languages->locale( $language ) ) );
-			if ( $this->languages->is_rtl( $language ) ) {
-				$html_el->setAttribute( 'dir', 'rtl' );
-			}
+			$html_el->setAttribute( 'dir', $this->languages->is_rtl( $language ) ? 'rtl' : 'ltr' );
 		}
 		$out = $dom->saveHTML();
-		if ( ! is_string( $out ) || '' === $out ) {
-			return $original;
-		}
-		$out = preg_replace( '/^<\?xml[^>]*>/i', '', $out ) ?? $out;
-		return $out;
+		return is_string( $out ) && '' !== $out ? ( preg_replace( '/^<\?xml[^>]*>\s*/i', '', $out ) ?? $out ) : $original;
 	}
 }

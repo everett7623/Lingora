@@ -1,0 +1,14 @@
+{
+  "name": "lingora-development",
+  "private": true,
+  "description": "Isolated WordPress regression and release tooling; not part of the plugin runtime.",
+  "engines": {
+    "node": ">=24.18.0"
+  },
+  "scripts": {
+    "sandbox:setup": "node tools/playground.mjs --setup",
+    "test:integration": "node tools/playground.mjs",
+    "test:matrix": "node tools/playground.mjs --matrix",
+    "check:plugin": "node tools/playground.mjs --plugin-check"
+  }
+}

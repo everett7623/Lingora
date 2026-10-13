@@ -18,11 +18,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $nav = array(
-	'lingora'            => array( '01', __( 'Overview', 'lingora' ) ),
-	'lingora-connection' => array( '02', __( 'AI Connection', 'lingora' ) ),
-	'lingora-languages'  => array( '03', __( 'Languages', 'lingora' ) ),
-	'lingora-strings'    => array( '04', __( 'Strings', 'lingora' ) ),
-	'lingora-settings'   => array( '05', __( 'Settings', 'lingora' ) ),
+	'lingora'            => array( '01', __( '总览', 'lingora' ) ),
+	'lingora-connection' => array( '02', __( 'AI 接口', 'lingora' ) ),
+	'lingora-languages'  => array( '03', __( '语言', 'lingora' ) ),
+	'lingora-strings'    => array( '04', __( '字符串', 'lingora' ) ),
+	'lingora-settings'   => array( '05', __( '设置', 'lingora' ) ),
 );
 $page = sanitize_key( $_GET['page'] ?? 'lingora' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 ?>
@@ -33,7 +33,7 @@ $page = sanitize_key( $_GET['page'] ?? 'lingora' ); // phpcs:ignore WordPress.Se
 				<span class="lingora-brand__mark" aria-hidden="true">L</span>
 				<div>
 					<strong>Lingora</strong>
-					<small><?php esc_html_e( 'Multilingual engine', 'lingora' ); ?></small>
+					<small><?php esc_html_e( '多语言引擎', 'lingora' ); ?></small>
 				</div>
 			</div>
 			<nav class="lingora-nav" aria-label="<?php esc_attr_e( 'Lingora', 'lingora' ); ?>">
@@ -44,12 +44,13 @@ $page = sanitize_key( $_GET['page'] ?? 'lingora' ); // phpcs:ignore WordPress.Se
 				<?php endforeach; ?>
 			</nav>
 			<div class="lingora-sidebar__note">
-				<strong><?php echo $connected ? esc_html__( 'AI ready', 'lingora' ) : esc_html__( 'Connect an AI provider', 'lingora' ); ?></strong>
-				<small><?php esc_html_e( 'Keys stay in WordPress options and never reach the public site.', 'lingora' ); ?></small>
+					<strong id="lingora-ai-status"><?php echo $connected ? ( ! empty( $settings['ai_consent'] ) ? esc_html__( 'AI 已就绪', 'lingora' ) : esc_html__( '请先同意连接 AI 服务', 'lingora' ) ) : esc_html__( '请先连接 AI 服务商', 'lingora' ); ?></strong>
+				<small><?php esc_html_e( '密钥只保存在 WordPress 选项中，不会出现在前台。', 'lingora' ); ?></small>
 			</div>
 		</aside>
 		<main class="lingora-main">
-			<div id="lingora-toast" class="lingora-toast" hidden></div>
+				<div id="lingora-toast" class="lingora-toast" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+				<div id="lingora-live-status" class="screen-reader-text" role="status" aria-live="polite" aria-atomic="true"></div>
 			<?php
 			$file = LINGORA_PATH . 'admin/views/' . $view . '.php';
 			if ( is_readable( $file ) ) {

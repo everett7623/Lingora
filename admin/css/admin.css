@@ -15,12 +15,6 @@
   margin: 12px 20px 20px 0;
 }
 
-#wpbody-content > .notice,
-#wpbody-content > .updated,
-#wpbody-content > .error {
-  display: none;
-}
-
 .lingora-app {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
@@ -159,6 +153,35 @@
 .lingora-hint {
   margin: 0;
   color: var(--lingora-muted);
+  max-width: 42rem;
+}
+
+.lingora-hint {
+  margin: 6px 0 12px;
+  font-size: 12px;
+}
+
+.lingora-hint code {
+  font-size: 11px;
+}
+
+.lingora-note {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid #f0d9a8;
+  border-radius: 10px;
+  background: #fff8eb;
+  font-size: 12px;
+}
+
+.lingora-note p,
+.lingora-note ul {
+  margin: 6px 0 0;
+  color: var(--lingora-muted);
+}
+
+.lingora-note ul {
+  padding-left: 18px;
 }
 
 .lingora-overview {
@@ -236,6 +259,10 @@
 
 .lingora-steps span {
   color: var(--lingora-muted);
+}
+
+.lingora-app [hidden] {
+  display: none !important;
 }
 
 .lingora-field {
@@ -366,11 +393,149 @@
   margin-bottom: 16px;
 }
 
+.lingora-toolbar--strings {
+  flex-wrap: wrap;
+}
+
+.lingora-toolbar--strings .lingora-field--inline {
+  min-width: 160px;
+}
+
+.lingora-field--grow {
+  flex: 1 1 220px;
+}
+
+.lingora-toolbar--strings .lingora-btn {
+  white-space: nowrap;
+  margin-bottom: 16px;
+}
+
+.lingora-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.lingora-chip {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--lingora-line);
+  border-radius: 9999px;
+  background: #fff;
+  color: var(--lingora-ink);
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.lingora-chip:hover,
+.lingora-chip:focus-visible {
+  border-color: var(--lingora-brand);
+}
+
+.lingora-chip:focus-visible {
+  outline: 2px solid var(--lingora-brand);
+  outline-offset: 2px;
+}
+
+.lingora-chip.is-active {
+  background: var(--lingora-brand-soft);
+  border-color: var(--lingora-brand);
+  color: var(--lingora-brand-strong);
+  font-weight: 600;
+}
+
+.lingora-table--strings td {
+  padding: 14px 10px;
+}
+
+.lingora-original {
+  max-width: 28rem;
+  word-break: break-word;
+}
+
+.lingora-original__text {
+  line-height: 1.45;
+}
+
+.lingora-original--slug .lingora-original__text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+
+.lingora-badge {
+  display: inline-flex;
+  margin-top: 6px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #eef1f0;
+  color: var(--lingora-muted);
+  font-size: 11px;
+}
+
+.lingora-input--translation {
+  min-height: 72px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.lingora-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.lingora-pill--missing {
+  background: #f4f1ea;
+  color: #8a6a2f;
+}
+
+.lingora-pill--auto {
+  background: var(--lingora-brand-soft);
+  color: var(--lingora-brand-strong);
+}
+
+.lingora-pill--human {
+  background: var(--lingora-brand);
+  color: #fff;
+}
+
+.lingora-status {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.lingora-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 1%;
+}
+
+.lingora-empty {
+  padding: 20px 4px 8px;
+}
+
+.lingora-empty p {
+  margin: 0 0 12px;
+  color: var(--lingora-muted);
+  max-width: 36rem;
+}
+
 .lingora-pager {
   display: flex;
   gap: 12px;
   align-items: center;
   margin-top: 16px;
+}
+
+.lingora-pager__label {
+  color: var(--lingora-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .lingora-toast {
@@ -388,8 +553,42 @@
   background: var(--lingora-danger);
 }
 
-.lingora-original {
-  max-width: 28rem;
+.lingora-app button:focus-visible,
+.lingora-app a:focus-visible {
+  outline: 2px solid var(--lingora-brand-strong);
+  outline-offset: 3px;
+}
+
+#lingora-provider-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.lingora-jobs {
+  margin-bottom: 16px;
+}
+
+[data-job-status] {
+  margin: 8px 0;
+}
+
+[data-job-status].is-error {
+  color: var(--lingora-danger);
+}
+
+[data-job-progress] {
+  width: 100%;
+  max-width: 32rem;
+  accent-color: var(--lingora-brand);
+}
+
+.lingora-original__text {
+  white-space: pre-wrap;
+}
+
+.lingora-actions {
+  flex-wrap: wrap;
 }
 
 @media (max-width: 1100px) {

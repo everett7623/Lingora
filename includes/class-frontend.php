@@ -27,28 +27,53 @@ class Lingora_Frontend {
 	}
 
 	public function start_buffer(): void {
-		if ( is_admin() || wp_doing_ajax() || wp_is_json_request() || is_feed() || is_robots() || is_trackback() ) {
-			return;
-		}
-		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+		if ( $this->buffering || ! class_exists( 'DOMDocument' ) || ! Lingora_Content::is_public_request() ) {
 			return;
 		}
 		if ( $this->is_excluded_path() ) {
 			return;
 		}
+		if ( ! $this->needs_buffer() ) {
+			return;
+		}
+		if ( Lingora_Editor::is_active() || Lingora_Editor::is_force() ) {
+			nocache_headers();
+			if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+				define( 'DONOTCACHEPAGE', true );
+			}
+		}
 		$this->buffering = true;
 		ob_start( array( $this, 'translate_html' ) );
 	}
 
+	/**
+	 * 默认语言的页面既不改写 HTML 也不产出任何译文——Lingora_Html 会在 $store_only
+	 * 分支里原样返回。为此对每个请求做一次整页 DOMDocument 解析 + 全树遍历纯属浪费，
+	 * 而默认语言通常占了站点大部分流量。
+	 *
+	 * 字典的填充不依赖这条路径：每日的 Lingora_Scanner 会扫描文章、页面和菜单，
+	 * 目标语言的访问同样会把渲染出的文案入库（主题外壳在两种语言下是同一批字符串）。
+	 */
+	private function needs_buffer(): bool {
+		if ( Lingora_Editor::is_active() || Lingora_Editor::is_force() ) {
+			return true;
+		}
+		if ( count( $this->languages->enabled() ) < 2 ) {
+			return false;
+		}
+		return ! $this->languages->is_default();
+	}
+
 	public function translate_html( string $html ): string {
 		try {
-			if ( '' === trim( $html ) || ! str_contains( $html, '<html' ) ) {
+			if ( ! Lingora_Content::is_public_request() || '' === trim( $html ) || false === stripos( $html, '<html' ) ) {
 				return $html;
 			}
 			$language = $this->languages->current();
 			$source   = $this->current_source();
 			$editor   = Lingora_Editor::is_active();
-			return $this->html()->translate( $html, $language, $source, $editor );
+			$force    = Lingora_Editor::is_force();
+			return $this->html()->translate( $html, $language, $source, $editor, $force );
 		} catch ( Throwable $e ) {
 			return $html;
 		}
@@ -56,7 +81,7 @@ class Lingora_Frontend {
 
 	private function html(): Lingora_Html {
 		if ( ! $this->html ) {
-			$this->html = new Lingora_Html( $this->translator, $this->languages );
+			$this->html = new Lingora_Html( $this->translator, $this->languages, $this->options );
 		}
 		return $this->html;
 	}

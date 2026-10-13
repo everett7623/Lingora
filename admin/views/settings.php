@@ -5,15 +5,18 @@
  * @package Lingora
  *
  * @var array $settings
+ * @var array $languages
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
+$example_code = (string) ( Lingora_Languages::example_pair( $languages ?? array() )['target']['code'] ?? 'en' );
 ?>
 <header class="lingora-hero">
 	<div>
-		<span class="lingora-eyebrow">Preferences</span>
+		<span class="lingora-eyebrow"><?php esc_html_e( '设置', 'lingora' ); ?></span>
 		<h1><?php esc_html_e( '站点设置', 'lingora' ); ?></h1>
 		<p><?php esc_html_e( '控制自动翻译、语言切换器、URL 和搜索引擎标记。', 'lingora' ); ?></p>
 	</div>
@@ -22,10 +25,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 <section class="lingora-panel">
 	<div class="lingora-panel__head">
 		<div>
-			<span class="lingora-eyebrow">Translation</span>
+			<span class="lingora-eyebrow"><?php esc_html_e( '翻译', 'lingora' ); ?></span>
 			<h2><?php esc_html_e( '翻译行为', 'lingora' ); ?></h2>
 		</div>
 	</div>
+	<p class="lingora-hint"><?php esc_html_e( '自动翻译需要先在「AI 接口」页明确同意连接外部服务。扫描采集的公开文案进入队列后，才由后台任务发送并翻译；未同意时不会发送。', 'lingora' ); ?> <a href="<?php echo esc_url( admin_url( 'admin.php?page=lingora-connection' ) ); ?>"><?php esc_html_e( '查看发送内容、费用与授权设置', 'lingora' ); ?></a></p>
 	<label class="lingora-check">
 		<input type="checkbox" id="opt-auto-translate" <?php checked( $settings['auto_translate'] ); ?>>
 		<span><?php esc_html_e( '自动翻译缺失字符串', 'lingora' ); ?></span>
@@ -33,6 +37,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<label class="lingora-check">
 		<input type="checkbox" id="opt-on-fly" <?php checked( $settings['translate_on_fly'] ); ?>>
 		<span><?php esc_html_e( '首次访问时即时翻译少量句子', 'lingora' ); ?></span>
+	</label>
+	<label class="lingora-check">
+		<input type="checkbox" id="opt-scan-published" <?php checked( $settings['scan_published'] ); ?>>
+		<span><?php esc_html_e( '每天扫描已发布文章/页面/菜单，把未译字符串放入队列', 'lingora' ); ?></span>
 	</label>
 	<label class="lingora-field">
 		<span><?php esc_html_e( '即时翻译条数上限', 'lingora' ); ?></span>
@@ -44,7 +52,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	</label>
 	<label class="lingora-check">
 		<input type="checkbox" id="opt-slugs" <?php checked( $settings['translate_slugs'] ); ?>>
-		<span><?php esc_html_e( '翻译文章 / 页面 slug（/de/ueber-uns/）', 'lingora' ); ?></span>
+		<span><?php echo esc_html( sprintf( /* translators: %s: example translated slug path */ __( '翻译文章 / 页面 slug（/%s/about/）', 'lingora' ), $example_code ) ); ?></span>
 	</label>
 	<label class="lingora-check">
 		<input type="checkbox" id="opt-search" <?php checked( $settings['search_translations'] ); ?>>
@@ -55,7 +63,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 <section class="lingora-panel">
 	<div class="lingora-panel__head">
 		<div>
-			<span class="lingora-eyebrow">SEO</span>
+			<span class="lingora-eyebrow"><?php esc_html_e( '搜索引擎', 'lingora' ); ?></span>
 			<h2><?php esc_html_e( '搜索引擎', 'lingora' ); ?></h2>
 		</div>
 	</div>
@@ -65,7 +73,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	</label>
 	<label class="lingora-check">
 		<input type="checkbox" id="opt-sitemap" <?php checked( $settings['multilingual_sitemap'] ); ?>>
-		<span><?php esc_html_e( '在站点地图中加入 /de/ 等语言 URL', 'lingora' ); ?></span>
+		<span><?php echo esc_html( sprintf( /* translators: %s: language code */ __( '在站点地图中加入 /%s/ 等语言 URL', 'lingora' ), $example_code ) ); ?></span>
 	</label>
 	<label class="lingora-check">
 		<input type="checkbox" id="opt-detect" <?php checked( $settings['detect_browser'] ); ?>>
@@ -80,7 +88,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 <section class="lingora-panel">
 	<div class="lingora-panel__head">
 		<div>
-			<span class="lingora-eyebrow">Switcher</span>
+			<span class="lingora-eyebrow"><?php esc_html_e( '切换器', 'lingora' ); ?></span>
 			<h2><?php esc_html_e( '语言切换器', 'lingora' ); ?></h2>
 		</div>
 	</div>
@@ -129,7 +137,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 <section class="lingora-panel">
 	<div class="lingora-panel__head">
 		<div>
-			<span class="lingora-eyebrow">Exclude</span>
+			<span class="lingora-eyebrow"><?php esc_html_e( '排除', 'lingora' ); ?></span>
 			<h2><?php esc_html_e( '排除', 'lingora' ); ?></h2>
 		</div>
 	</div>

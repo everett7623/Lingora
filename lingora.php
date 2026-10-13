@@ -3,7 +3,7 @@
  * Plugin Name:       Lingora
  * Plugin URI:        https://everettlabs.dev
  * Description:       AI-native multilingual engine for WordPress. Translate the live site with OpenAI, Claude, DeepSeek, Gemini, Grok, Dots AI and OpenAI-compatible gateways.
- * Version:           0.0.1
+ * Version:           0.0.8
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            everettlabs
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'LINGORA_VERSION', '0.0.1' );
+define( 'LINGORA_VERSION', '0.0.8' );
 define( 'LINGORA_FILE', __FILE__ );
 define( 'LINGORA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'LINGORA_URL', plugin_dir_url( __FILE__ ) );

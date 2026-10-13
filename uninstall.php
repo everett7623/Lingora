@@ -27,5 +27,10 @@ delete_option( 'lingora_languages' );
 delete_option( 'lingora_db_version' );
 delete_option( 'lingora_cron_version' );
 delete_option( 'lingora_ui_version' );
+delete_option( 'lingora_ai_version' );
+delete_option( 'lingora_scan_state' );
 
 wp_clear_scheduled_hook( 'lingora_process_queue' );
+wp_clear_scheduled_hook( 'lingora_scan_published' );
+wp_clear_scheduled_hook( 'lingora_scan_step' );
+wp_clear_scheduled_hook( 'lingora_run_queue' );

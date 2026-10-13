@@ -30,6 +30,7 @@ class Lingora_Options {
 			'translate_gettext'      => true,
 			'multilingual_sitemap'   => true,
 			'search_translations'    => true,
+			'scan_published'         => true,
 			'switcher_enabled'       => true,
 			'switcher_style'         => 'nav',
 			'switcher_position'      => 'top-right',
@@ -39,16 +40,17 @@ class Lingora_Options {
 			'switcher_show_name'     => false,
 			'exclude_selectors'      => '.notranslate, .lingora-skip, code, pre, kbd',
 			'exclude_paths'          => '/wp-admin,/wp-login.php,/feed',
-			'ai'                 => array(
-				'provider_id'         => 'deepseek',
-				'auth_mode'           => 'apiKey',
-				'api_key'             => '',
-				'project_key'         => '',
-				'project_key_header'  => 'Authorization',
-				'project_key_scheme'  => 'bearer',
-				'base_url'            => 'https://api.deepseek.com',
-				'model'               => 'deepseek-v4-flash',
-				'transcribe_model'    => '',
+			// 未获站长明确同意前，任何 AI 联网行为都被禁止（见 can_send_ai()）。
+			'ai_consent'             => false,
+			'ai'                     => array(
+				'provider_id'        => 'deepseek',
+				'auth_mode'          => 'apiKey',
+				'api_key'            => '',
+				'project_key'        => '',
+				'project_key_header' => 'Authorization',
+				'project_key_scheme' => 'bearer',
+				'base_url'           => 'https://api.deepseek.com',
+				'model'              => '',
 			),
 		);
 	}
@@ -61,6 +63,27 @@ class Lingora_Options {
 			add_option( self::LANGUAGES_KEY, Lingora_Languages::default_set(), '', false );
 		}
 		self::migrate_ui();
+		self::migrate_connection();
+	}
+
+	/**
+	 * Keep stored provider, credentials and model IDs intact; drop unused voice fields.
+	 * A saved connection must never be redirected to a different vendor by migration.
+	 */
+	public static function migrate_connection(): void {
+		if ( '0.0.4' === get_option( 'lingora_ai_version' ) ) {
+			return;
+		}
+		$settings = get_option( self::SETTINGS_KEY, array() );
+		if ( ! is_array( $settings ) ) {
+			$settings = array();
+		}
+		$ai = isset( $settings['ai'] ) && is_array( $settings['ai'] ) ? $settings['ai'] : array();
+		unset( $ai['transcribe_model'], $ai['transcribeModel'] );
+
+		$settings['ai'] = $ai;
+		update_option( self::SETTINGS_KEY, $settings, false );
+		update_option( 'lingora_ai_version', '0.0.4', false );
 	}
 
 	public static function migrate_ui(): void {
@@ -112,16 +135,16 @@ class Lingora_Options {
 	 */
 	public function update( array $patch ): void {
 		$next = $this->deep_merge( $this->all(), $patch );
-		update_option( self::SETTINGS_KEY, $next, false );
+		if ( ! update_option( self::SETTINGS_KEY, $next, false ) && get_option( self::SETTINGS_KEY ) !== $next ) {
+			throw new RuntimeException( __( '设置保存失败，请重试', 'lingora' ) );
+		}
 	}
 
 	/**
 	 * @param array<string, mixed> $ai
 	 */
 	public function update_ai( array $ai ): void {
-		$current = $this->all();
-		$current['ai'] = array_merge( $this->ai(), $ai );
-		update_option( self::SETTINGS_KEY, $current, false );
+		$this->update( array( 'ai' => $ai ) );
 	}
 
 	/**
@@ -136,15 +159,32 @@ class Lingora_Options {
 	 * @param list<array<string, mixed>> $languages
 	 */
 	public function save_languages( array $languages ): void {
-		update_option( self::LANGUAGES_KEY, array_values( $languages ), false );
+		$languages = array_values( $languages );
+		if ( ! update_option( self::LANGUAGES_KEY, $languages, false ) && get_option( self::LANGUAGES_KEY ) !== $languages ) {
+			throw new RuntimeException( __( '语言设置保存失败，请重试', 'lingora' ) );
+		}
 	}
 
 	public function has_ai_credential(): bool {
-		$ai      = $this->ai();
-		$mode    = (string) ( $ai['auth_mode'] ?? 'apiKey' );
-		$secret  = 'projectKey' === $mode ? (string) ( $ai['project_key'] ?? '' ) : (string) ( $ai['api_key'] ?? '' );
-		$base    = trim( (string) ( $ai['base_url'] ?? '' ) );
-		return '' !== trim( $secret ) && '' !== $base;
+		$ai        = $this->ai();
+		$providers = new Lingora_Providers();
+		$id        = (string) ( $ai['provider_id'] ?? '' );
+		if ( ! $providers->exists( $id ) ) {
+			return false;
+		}
+		$provider = $providers->get( $id );
+		$mode     = ! empty( $provider['configurable_auth'] ) ? ( $ai['auth_mode'] ?? 'apiKey' ) : $provider['preferred_auth_mode'];
+		$secret   = 'projectKey' === $mode ? (string) ( $ai['project_key'] ?? '' ) : (string) ( $ai['api_key'] ?? '' );
+		$base     = ! empty( $provider['configurable_base_url'] ) ? (string) ( $ai['base_url'] ?? '' ) : (string) $provider['base_url'];
+		return '' !== trim( $secret ) && '' !== trim( $base );
+	}
+
+	/**
+	 * 站长同意（ai_consent）+ 凭据齐备才允许任何 AI 联网行为。
+	 * 这是 REST / 翻译 / 模型列表共用的唯一闸门。
+	 */
+	public function can_send_ai(): bool {
+		return true === $this->get( 'ai_consent', false ) && $this->has_ai_credential();
 	}
 
 	/**

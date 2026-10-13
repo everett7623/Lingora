@@ -40,15 +40,20 @@ class Lingora_Switcher {
 		wp_enqueue_script(
 			'lingora-switcher',
 			LINGORA_URL . 'public/js/switcher.js',
-			array(),
+			array( 'wp-i18n' ),
 			LINGORA_VERSION,
 			true
 		);
+		wp_set_script_translations( 'lingora-switcher', 'lingora', LINGORA_PATH . 'languages' );
 		wp_localize_script(
 			'lingora-switcher',
 			'lingoraSwitcher',
 			array(
-				'cookie' => Lingora_Detect::COOKIE,
+				'cookie'       => Lingora_Detect::COOKIE,
+				'remember'     => (bool) $this->options->get( 'remember_language', true ),
+				'cookiePath'   => defined( 'COOKIEPATH' ) && COOKIEPATH ? COOKIEPATH : '/',
+				'cookieDomain' => defined( 'COOKIE_DOMAIN' ) ? (string) COOKIE_DOMAIN : '',
+				'secure'       => is_ssl(),
 			)
 		);
 	}
@@ -113,6 +118,7 @@ class Lingora_Switcher {
 		if ( 'both' === $style ) {
 			$position = (string) $this->options->get( 'switcher_position', 'bottom-right' );
 			echo $this->markup( 'floating', $position ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			return;
 		}
 		if ( $this->injected ) {
 			return;
@@ -135,11 +141,12 @@ class Lingora_Switcher {
 		$show_name = (bool) $this->options->get( 'switcher_show_name', false );
 		$request   = $this->current_request_url();
 		$pos_class = $position ? ' is-' . sanitize_html_class( $position ) : '';
+		$list_id   = wp_unique_id( 'lingora-languages-' );
 
 		ob_start();
 		?>
-		<nav class="lingora-switcher lingora-skip notranslate is-<?php echo esc_attr( $style ); ?><?php echo esc_attr( $pos_class ); ?>" translate="no" aria-label="<?php esc_attr_e( 'Languages', 'lingora' ); ?>">
-			<button type="button" class="lingora-switcher__current" aria-expanded="false" aria-haspopup="listbox">
+			<nav class="lingora-switcher lingora-skip notranslate is-<?php echo esc_attr( $style ); ?><?php echo esc_attr( $pos_class ); ?>" translate="no" aria-label="<?php esc_attr_e( '语言', 'lingora' ); ?>">
+				<button type="button" class="lingora-switcher__current" aria-expanded="false" aria-controls="<?php echo esc_attr( $list_id ); ?>" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: current language */ __( '切换语言，当前为%s', 'lingora' ), $this->languages->label( $current ) ) ); ?>">
 				<?php if ( $show_flag ) : ?>
 					<?php echo Lingora_Flags::markup( $current, $this->languages->flag( $current ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 				<?php endif; ?>
@@ -150,7 +157,7 @@ class Lingora_Switcher {
 					<span class="lingora-switcher__name"><?php echo esc_html( $this->languages->label( $current ) ); ?></span>
 				<?php endif; ?>
 			</button>
-			<ul class="lingora-switcher__list" role="listbox" hidden>
+				<ul class="lingora-switcher__list" id="<?php echo esc_attr( $list_id ); ?>" hidden>
 				<?php foreach ( $langs as $lang ) : ?>
 					<?php
 					$code = (string) $lang['code'];
@@ -185,8 +192,7 @@ class Lingora_Switcher {
 	}
 
 	private function current_request_url(): string {
-		$path = $this->rewrite->strip_language( $this->rewrite->raw_path() ?: ( wp_parse_url( $_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH ) ?: '/' ) );
-		return untrailingslashit( $this->rewrite->unlocalized_home() ) . ( '/' === $path ? '/' : $path );
+		return Lingora_Rewrite::strip_editor_params( $this->rewrite->current_url() );
 	}
 }
 

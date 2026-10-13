@@ -10,7 +10,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Lingora_Activator {
-	public static function activate(): void {
+	public static function activate( bool $network_wide = false ): void {
+		if ( $network_wide || is_multisite() ) {
+			wp_die( esc_html__( '此版本的 Lingora 仅支持单站点 WordPress 安装。', 'lingora' ), esc_html__( '无法启用 Lingora', 'lingora' ), array( 'back_link' => true ) );
+		}
 		Lingora_Db::install();
 		Lingora_Options::seed();
 
@@ -29,7 +32,7 @@ class Lingora_Activator {
 	public static function schedules( array $schedules ): array {
 		$schedules['lingora_five_minutes'] = array(
 			'interval' => 300,
-			'display'  => __( 'Every 5 minutes', 'lingora' ),
+			'display'  => __( '每 5 分钟', 'lingora' ),
 		);
 		return $schedules;
 	}

@@ -160,13 +160,15 @@
 .lingora-flag--il { background: linear-gradient(#fff 38%, #0038b8 38% 62%, #fff 62%); }
 .lingora-flag--ir { background: linear-gradient(#239f40 33.33%, #fff 33.33% 66.66%, #da0000 66.66%); }
 
-.lingora-node {
+.lingora-node,
+.lingora-editor-active [data-lingora-attrs] {
   outline: 1px dashed rgba(7, 139, 112, 0.45);
   outline-offset: 2px;
   cursor: pointer;
 }
 
-.lingora-node.is-editing {
+.lingora-node.is-editing,
+.lingora-editor-active [data-lingora-attrs].is-editing {
   outline: 2px solid #078b70;
   background: rgba(7, 139, 112, 0.08);
 }
@@ -182,7 +184,50 @@
   background: #f3f7f5;
   border-left: 1px solid #dce7e3;
   box-sizing: border-box;
+  overflow-y: auto;
   color: #14221e;
+}
+
+.lingora-editor select,
+.lingora-editor textarea {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.lingora-editor select {
+  width: 100%;
+  min-height: 36px;
+  margin: 6px 0 12px;
+  padding: 7px 9px;
+  border: 1px solid #dce7e3;
+  border-radius: 8px;
+  background: #fff;
+  color: #14221e;
+  font: inherit;
+}
+
+.lingora-editor textarea:disabled {
+  opacity: 0.72;
+}
+
+.lingora-editor button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.lingora-editor button:focus-visible,
+.lingora-editor select:focus-visible,
+.lingora-editor textarea:focus-visible {
+  outline: 2px solid #05654f;
+  outline-offset: 2px;
+}
+
+.lingora-editor [data-status].is-error {
+  color: #b42318;
+}
+
+.lingora-editor__actions {
+  flex-wrap: wrap;
 }
 
 .lingora-editor h2 {

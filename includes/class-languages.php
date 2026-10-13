@@ -49,19 +49,44 @@ class Lingora_Languages {
 	}
 
 	/**
+	 * 语言代码规则：ASCII、2-12 字符、简单 BCP47（2-3 位小写字母主标签，
+	 * 可跟若干 “-字母/数字” 子标签）。与 translations.language varchar(12) 对齐。
+	 */
+	public static function is_valid_code( string $code ): bool {
+		if ( strlen( $code ) < 2 || strlen( $code ) > 12 ) {
+			return false;
+		}
+		return 1 === preg_match( '/^[a-z]{2,3}(?:-[a-z0-9]{1,8})*$/', $code );
+	}
+
+	/**
+	 * 初始语言集合按“站点语言（WPLANG）”决定，而不是当前后台用户的 locale——
+	 * 否则第一位登录的管理员会把自己的界面语言写进站点默认语言。
+	 *
 	 * @return list<array<string, mixed>>
 	 */
 	public static function default_set(): array {
-		$site = determine_locale();
-		$code = str_starts_with( strtolower( $site ), 'zh' ) ? 'zh' : 'en';
-		$second = 'zh' === $code ? 'en' : 'zh';
+		$site = (string) get_option( 'WPLANG', '' );
+		if ( '' === $site ) { $site = (string) ( defined( 'WPLANG' ) ? WPLANG : '' ); }
+		$site = '' === $site ? 'en_US' : $site;
+		$normalized = strtolower( str_replace( '_', '-', $site ) );
 		$by_code = array();
+		$primary = null;
 		foreach ( self::catalog() as $item ) {
 			$by_code[ $item['code'] ] = $item;
+			if ( strtolower( str_replace( '_', '-', $item['locale'] ) ) === $normalized || $item['code'] === $normalized ) {
+				$primary = $item;
+			}
 		}
+		if ( null === $primary ) {
+			$code = self::is_valid_code( $normalized ) ? $normalized : explode( '-', $normalized )[0];
+			$code = self::is_valid_code( $code ) ? $code : 'en';
+			$primary = array( 'code' => $code, 'name' => $site, 'native' => $site, 'locale' => $site, 'rtl' => in_array( explode( '-', $code )[0], array( 'ar', 'he', 'fa', 'ur' ), true ), 'flag' => Lingora_Flags::country( $code ) );
+		}
+		$second = 'en' === $primary['code'] ? 'zh' : 'en';
 
 		return array(
-			array_merge( $by_code[ $code ], array( 'enabled' => true, 'is_default' => true ) ),
+			array_merge( $primary, array( 'enabled' => true, 'is_default' => true ) ),
 			array_merge( $by_code[ $second ], array( 'enabled' => true, 'is_default' => false ) ),
 		);
 	}
@@ -86,6 +111,74 @@ class Lingora_Languages {
 		}
 		$enabled = $this->enabled();
 		return (string) ( $enabled[0]['code'] ?? 'en' );
+	}
+
+	/**
+	 * Short Chinese label for admin copy (URL examples, checkboxes).
+	 */
+	public static function admin_label( string $code, string $fallback = '' ): string {
+		$map = array(
+			'en'    => __( '英语', 'lingora' ),
+			'zh'    => __( '中文', 'lingora' ),
+			'zh-tw' => __( '繁体中文', 'lingora' ),
+			'ja'    => __( '日语', 'lingora' ),
+			'ko'    => __( '韩语', 'lingora' ),
+			'es'    => __( '西班牙语', 'lingora' ),
+			'fr'    => __( '法语', 'lingora' ),
+			'de'    => __( '德语', 'lingora' ),
+			'pt'    => __( '葡萄牙语', 'lingora' ),
+			'pt-br' => __( '巴西葡萄牙语', 'lingora' ),
+			'it'    => __( '意大利语', 'lingora' ),
+			'ru'    => __( '俄语', 'lingora' ),
+			'ar'    => __( '阿拉伯语', 'lingora' ),
+			'hi'    => __( '印地语', 'lingora' ),
+			'th'    => __( '泰语', 'lingora' ),
+			'vi'    => __( '越南语', 'lingora' ),
+			'id'    => __( '印尼语', 'lingora' ),
+			'tr'    => __( '土耳其语', 'lingora' ),
+			'nl'    => __( '荷兰语', 'lingora' ),
+			'pl'    => __( '波兰语', 'lingora' ),
+			'sv'    => __( '瑞典语', 'lingora' ),
+			'uk'    => __( '乌克兰语', 'lingora' ),
+			'he'    => __( '希伯来语', 'lingora' ),
+			'fa'    => __( '波斯语', 'lingora' ),
+		);
+		if ( isset( $map[ $code ] ) ) {
+			return $map[ $code ];
+		}
+		return '' !== $fallback ? $fallback : $code;
+	}
+
+	/**
+	 * Default language plus first enabled target, for URL examples.
+	 *
+	 * @param list<array<string, mixed>> $languages
+	 * @return array{default: array<string, mixed>, target: array<string, mixed>}
+	 */
+	public static function example_pair( array $languages ): array {
+		$fallback = array(
+			'code'   => 'en',
+			'name'   => 'English',
+			'native' => 'English',
+		);
+		$default  = null;
+		$target   = null;
+		foreach ( $languages as $lang ) {
+			if ( ! empty( $lang['is_default'] ) ) {
+				$default = $lang;
+				break;
+			}
+		}
+		foreach ( $languages as $lang ) {
+			if ( empty( $lang['is_default'] ) && ! empty( $lang['enabled'] ) ) {
+				$target = $lang;
+				break;
+			}
+		}
+		return array(
+			'default' => $default ?: ( $languages[0] ?? $fallback ),
+			'target'  => $target ?: $fallback,
+		);
 	}
 
 	public function current(): string {
