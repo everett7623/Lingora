@@ -61,6 +61,7 @@ class Lingora_Admin {
 			'lingoraAdmin',
 			array(
 				'restUrl'      => esc_url_raw( rest_url( 'lingora/v1/' ) ),
+				'flagBaseUrl'  => esc_url_raw( LINGORA_URL . 'public/vendor/flag-icons/4x3/' ),
 				'nonce'        => wp_create_nonce( 'wp_rest' ),
 					'page'         => sanitize_key( $_GET['page'] ?? 'lingora' ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 					'siteUrl'      => home_url( '/' ),

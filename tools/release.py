@@ -24,7 +24,7 @@ version = versions[0]
 if not re.fullmatch(r'\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?', version):
     raise SystemExit('Invalid release version')
 paths = [ROOT / f for f in ('lingora.php', 'uninstall.php', 'readme.txt', 'LICENSE')]
-allowed = {'.php', '.css', '.js', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.po', '.mo', '.pot', '.json'}
+allowed = {'.php', '.css', '.js', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.po', '.mo', '.pot', '.json', '.txt'}
 for directory in ('admin', 'includes', 'public', 'assets', 'languages'):
     folder = ROOT / directory
     if folder.is_symlink():

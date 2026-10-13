@@ -12,6 +12,12 @@ $options->save_languages( array(
 	array( 'code' => 'en', 'name' => 'English', 'native' => 'English', 'locale' => 'en_US', 'enabled' => true, 'is_default' => true ),
 	array( 'code' => 'de', 'name' => 'German', 'native' => 'Deutsch', 'locale' => 'de_DE', 'enabled' => true, 'is_default' => false ),
 ) );
+$flag_markup = Lingora_Flags::markup( 'de' );
+lingora_front_check( str_contains( $flag_markup, '/flag-icons/4x3/de.svg' ) && str_contains( $flag_markup, '<img' ), 'switcher uses local SVG country flags' );
+foreach ( Lingora_Languages::catalog() as $catalog_language ) {
+	$flag_file = LINGORA_PATH . 'public/vendor/flag-icons/4x3/' . $catalog_language['flag'] . '.svg';
+	lingora_front_check( file_exists( $flag_file ), 'catalog flag exists for ' . $catalog_language['code'] );
+}
 $GLOBALS['lingora_language'] = 'de';
 $_SERVER['REQUEST_METHOD'] = 'GET';
 wp_set_current_user( 0 );

@@ -1,9 +1,10 @@
 :root {
-  --lingora-text: #1a1a1a;
-  --lingora-muted: #5c5c5c;
-  --lingora-line: #e6e6e6;
-  --lingora-hover: #f4f4f4;
+  --lingora-text: #17211d;
+  --lingora-muted: #52615b;
+  --lingora-line: #d9e2de;
+  --lingora-hover: #edf5f2;
   --lingora-bg: #fff;
+  --lingora-accent: #087b65;
 }
 
 .lingora-switcher {
@@ -43,40 +44,57 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 36px;
-  padding: 0 4px;
-  border: 0;
-  background: transparent;
-  color: inherit;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--lingora-line);
+  border-radius: 10px;
+  background: var(--lingora-bg);
+  color: var(--lingora-text);
   cursor: pointer;
   font: inherit;
   letter-spacing: 0.04em;
 }
 
+.lingora-switcher__current::after {
+  width: 6px;
+  height: 6px;
+  margin-left: 2px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  content: "";
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 160ms ease;
+}
+
+.lingora-switcher__current[aria-expanded="true"]::after {
+  transform: translateY(2px) rotate(225deg);
+}
+
 .lingora-switcher.is-floating .lingora-switcher__current {
-  padding: 0 12px;
-  border: 1px solid var(--lingora-line);
   border-radius: 999px;
-  background: var(--lingora-bg);
 }
 
 .lingora-switcher__current:hover,
 .lingora-switcher__current:focus-visible {
-  opacity: 0.72;
-  outline: none;
+  border-color: var(--lingora-accent);
+  background: var(--lingora-hover);
+  outline: 2px solid transparent;
 }
 
 .lingora-switcher__list {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  min-width: 108px;
+  min-width: 148px;
   margin: 0;
   padding: 8px 0;
   list-style: none;
   background: var(--lingora-bg);
   border: 1px solid var(--lingora-line);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  color: var(--lingora-text);
+  box-shadow: 0 14px 36px rgba(14, 39, 31, 0.16);
+  overflow: hidden;
   z-index: 20;
 }
 
@@ -100,7 +118,9 @@
   align-items: center;
   gap: 10px;
   padding: 8px 14px;
-  color: inherit;
+  min-height: 38px;
+  box-sizing: border-box;
+  color: var(--lingora-text);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -108,7 +128,8 @@
 .lingora-switcher__list a:hover,
 .lingora-switcher__list a:focus-visible {
   background: var(--lingora-hover);
-  outline: none;
+  color: #064f42;
+  outline: 2px solid transparent;
 }
 
 .lingora-switcher__code {
@@ -124,41 +145,14 @@
 }
 
 .lingora-flag {
-  display: inline-block;
-  width: 18px;
-  height: 13px;
+  display: block;
+  width: 20px;
+  height: 15px;
   border-radius: 2px;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
-  background-size: cover;
-  background-position: center;
-  flex: 0 0 18px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18);
+  object-fit: cover;
+  flex: 0 0 20px;
 }
-
-.lingora-flag--us { background: linear-gradient(#3c3b6e 38%, #fff 38% 46%, #b22234 46%); }
-.lingora-flag--gb { background: linear-gradient(#012169 50%, #c8102e 50%); }
-.lingora-flag--de { background: linear-gradient(#000 33.33%, #d00 33.33% 66.66%, #ffce00 66.66%); }
-.lingora-flag--fr { background: linear-gradient(90deg, #0055a4 33.33%, #fff 33.33% 66.66%, #ef4135 66.66%); }
-.lingora-flag--es { background: linear-gradient(#aa151b 25%, #f1bf00 25% 75%, #aa151b 75%); }
-.lingora-flag--it { background: linear-gradient(90deg, #009246 33.33%, #fff 33.33% 66.66%, #ce2b37 66.66%); }
-.lingora-flag--ru { background: linear-gradient(#fff 33.33%, #0039a6 33.33% 66.66%, #d52b1e 66.66%); }
-.lingora-flag--jp { background: radial-gradient(circle at 50% 50%, #bc002d 34%, #fff 35%); }
-.lingora-flag--kr { background: linear-gradient(#fff 42%, #c60c30 42% 58%, #fff 58%); }
-.lingora-flag--cn { background: linear-gradient(#de2910, #de2910); }
-.lingora-flag--tw { background: linear-gradient(#fe0000 55%, #000095 55%); }
-.lingora-flag--pt { background: linear-gradient(90deg, #006600 40%, #ff0000 40%); }
-.lingora-flag--br { background: linear-gradient(#009c3b, #009c3b); }
-.lingora-flag--sa { background: linear-gradient(#006c35, #006c35); }
-.lingora-flag--in { background: linear-gradient(#ff9933 33.33%, #fff 33.33% 66.66%, #138808 66.66%); }
-.lingora-flag--th { background: linear-gradient(#a51931 20%, #fff 20% 40%, #2d2a4a 40% 60%, #fff 60% 80%, #a51931 80%); }
-.lingora-flag--vn { background: linear-gradient(#da251d, #da251d); }
-.lingora-flag--id { background: linear-gradient(#ff0000 50%, #fff 50%); }
-.lingora-flag--tr { background: linear-gradient(#e30a17, #e30a17); }
-.lingora-flag--nl { background: linear-gradient(#ae1c28 33.33%, #fff 33.33% 66.66%, #21468b 66.66%); }
-.lingora-flag--pl { background: linear-gradient(#fff 50%, #dc143c 50%); }
-.lingora-flag--se { background: linear-gradient(#006aa7, #006aa7); }
-.lingora-flag--ua { background: linear-gradient(#005bbb 50%, #ffd500 50%); }
-.lingora-flag--il { background: linear-gradient(#fff 38%, #0038b8 38% 62%, #fff 62%); }
-.lingora-flag--ir { background: linear-gradient(#239f40 33.33%, #fff 33.33% 66.66%, #da0000 66.66%); }
 
 .lingora-node,
 .lingora-editor-active [data-lingora-attrs] {

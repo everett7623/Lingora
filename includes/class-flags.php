@@ -55,11 +55,14 @@ class Lingora_Flags {
 	}
 
 	public static function markup( string $code, string $flag = '' ): string {
-		$country = $flag !== '' ? $flag : self::country( $code );
+		$country = strtolower( $flag !== '' ? $flag : self::country( $code ) );
+		if ( 1 !== preg_match( '/^[a-z]{2}$/', $country ) ) {
+			$country = self::country( $code );
+		}
+		$src = LINGORA_URL . 'public/vendor/flag-icons/4x3/' . $country . '.svg';
 		return sprintf(
-			'<span class="lingora-flag lingora-flag--%s" data-flag="%s" aria-hidden="true"></span>',
-			esc_attr( $country ),
-			esc_attr( $country )
+			'<img class="lingora-flag" src="%s" width="20" height="15" alt="" aria-hidden="true" decoding="async">',
+			esc_url( $src ),
 		);
 	}
 }

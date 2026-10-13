@@ -393,6 +393,155 @@
   margin-bottom: 16px;
 }
 
+.lingora-language-picker__field {
+  position: relative;
+  max-width: 520px;
+}
+
+.lingora-language-picker__native[hidden] {
+  display: none;
+}
+
+.lingora-language-picker {
+  position: relative;
+}
+
+.lingora-language-picker__button {
+  display: flex;
+  width: 100%;
+  min-height: 42px;
+  padding: 7px 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--lingora-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--lingora-ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+#lingora-language-picker-value,
+.lingora-language-name {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+#lingora-language-picker-value small,
+.lingora-language-name small {
+  color: var(--lingora-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.lingora-language-name > span {
+  display: grid;
+  gap: 2px;
+}
+
+.lingora-country-flag {
+  display: block;
+  width: 24px;
+  height: 18px;
+  flex: 0 0 24px;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(20, 34, 30, 0.18);
+  object-fit: cover;
+}
+
+.lingora-language-picker__chevron {
+  width: 7px;
+  height: 7px;
+  margin: 0 3px 3px 0;
+  border-right: 2px solid var(--lingora-muted);
+  border-bottom: 2px solid var(--lingora-muted);
+  transform: rotate(45deg);
+}
+
+.lingora-language-picker__button[aria-expanded="true"] .lingora-language-picker__chevron {
+  margin: 3px 3px 0 0;
+  transform: rotate(225deg);
+}
+
+.lingora-language-picker__button:hover,
+.lingora-language-picker__button:focus-visible {
+  border-color: var(--lingora-brand);
+  box-shadow: 0 0 0 3px rgba(7, 139, 112, 0.16);
+  outline: none;
+}
+
+.lingora-language-picker__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  border: 1px solid var(--lingora-line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 16px 42px rgba(26, 61, 51, 0.16);
+}
+
+.lingora-language-picker__search {
+  min-height: 38px;
+  margin: 0 0 7px;
+}
+
+.lingora-language-picker__options {
+  max-height: 300px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.lingora-language-picker__option {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: 11px;
+  align-items: center;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--lingora-ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.lingora-language-picker__option > span {
+  display: grid;
+  gap: 1px;
+}
+
+.lingora-language-picker__option small,
+.lingora-language-picker__option code {
+  color: var(--lingora-muted);
+  font-size: 11px;
+}
+
+.lingora-language-picker__option:hover,
+.lingora-language-picker__option:focus-visible {
+  background: var(--lingora-brand-soft);
+  outline: none;
+}
+
+.lingora-language-picker__option:disabled {
+  opacity: 0.46;
+  cursor: not-allowed;
+}
+
+.lingora-language-picker__empty {
+  margin: 0;
+  padding: 16px 10px;
+  color: var(--lingora-muted);
+  text-align: center;
+}
+
 .lingora-toolbar--strings {
   flex-wrap: wrap;
 }
@@ -610,5 +759,33 @@
   }
   .lingora-main {
     padding: 24px 18px 32px;
+  }
+}
+
+@media (max-width: 782px) {
+  .lingora-wrap {
+    margin-right: 10px;
+  }
+  .lingora-panel {
+    padding: 18px;
+  }
+  .lingora-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .lingora-language-picker__field {
+    max-width: none;
+    margin-bottom: 0;
+  }
+  .lingora-language-picker__options {
+    max-height: min(300px, 52vh);
+  }
+  .lingora-table {
+    display: block;
+    overflow-x: auto;
+  }
+  .lingora-table th:nth-child(2),
+  .lingora-table td:nth-child(2) {
+    white-space: nowrap;
   }
 }

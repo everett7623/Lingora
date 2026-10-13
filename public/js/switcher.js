@@ -16,18 +16,20 @@
     document.cookie = cookie;
   }
 
-  document.querySelectorAll('.lingora-switcher').forEach(function (root, index) {
-    const button = root.querySelector('.lingora-switcher__current');
-    const list = root.querySelector('.lingora-switcher__list');
-    if (!button || !list) return;
-    const links = Array.from(list.querySelectorAll('a[data-lingora-lang]'));
-    if (!list.id) list.id = 'lingora-language-list-' + index;
-    button.setAttribute('aria-controls', list.id);
-    button.setAttribute('aria-label', __('切换网站语言', 'lingora'));
-    // These are navigation links, not selectable listbox options.
-    button.removeAttribute('aria-haspopup');
-    list.removeAttribute('role');
-    root.setAttribute('aria-label', __('网站语言', 'lingora'));
+  function initSwitchers() {
+    document.querySelectorAll('.lingora-switcher').forEach(function (root, index) {
+      const button = root.querySelector('.lingora-switcher__current');
+      const list = root.querySelector('.lingora-switcher__list');
+      if (!button || !list || root.dataset.lingoraReady === 'true') return;
+      root.dataset.lingoraReady = 'true';
+      const links = Array.from(list.querySelectorAll('a[data-lingora-lang]'));
+      if (!list.id) list.id = 'lingora-language-list-' + index;
+      button.setAttribute('aria-controls', list.id);
+      button.setAttribute('aria-label', __('切换网站语言', 'lingora'));
+      // These are navigation links, not selectable listbox options.
+      button.removeAttribute('aria-haspopup');
+      list.removeAttribute('role');
+      root.setAttribute('aria-label', __('网站语言', 'lingora'));
 
     function close(focus) {
       const wasOpen = !list.hidden;
@@ -69,6 +71,13 @@
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape' && !list.hidden) close(root.contains(document.activeElement));
     });
-    close(false);
-  });
+      close(false);
+    });
+  }
+
+  if ('loading' === document.readyState) {
+    document.addEventListener('DOMContentLoaded', initSwitchers, { once: true });
+  } else {
+    initSwitchers();
+  }
 })();
