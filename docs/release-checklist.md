@@ -43,7 +43,7 @@ python tools/release.py --check
 python tools/release.py --output dist/lingora-0.0.7.zip
 ```
 
-The packer refuses to overwrite an existing artifact, includes only runtime directories plus the root plugin files, writes `dist/lingora-0.0.7.manifest.json`, and records a SHA-256 hash. Install the generated ZIP into a clean single-site WordPress sandbox and repeat activation plus the smoke suite before upload.
+The packer refuses to overwrite the versioned artifact, includes only runtime directories plus the root plugin files, writes `dist/lingora-0.0.7.manifest.json`, and records a SHA-256 hash. It also writes a byte-identical stable-name alias `dist/lingora.zip` (the wp.org/GitHub latest-download convention); the alias is regenerable and may be overwritten on rebuild. Install the generated ZIP into a clean single-site WordPress sandbox and repeat activation plus the smoke suite before upload.
 
 ## Submission gate
 

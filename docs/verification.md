@@ -29,9 +29,10 @@ Date: 2026-09-24
 ## Candidate artifact
 
 - ZIP: `dist/lingora-0.0.8.zip`
+- Stable-name alias: `dist/lingora.zip` (byte-identical; wp.org/GitHub latest-download convention)
 - Manifest: `dist/lingora-0.0.8.manifest.json`
 - Runtime files: 50, all under `lingora/`.
-- SHA-256: `a8c5bf46f80bdb50eb1f4357fc0903a0c4e67f27dc80814fe983c95b925e3412`
+- SHA-256: `a8c5bf46f80bdb50eb1f4357fc0903a0c4e67f27dc80814fe983c95b925e3412` (both names)
 
 ## Remaining submission gates
 

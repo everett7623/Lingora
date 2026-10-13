@@ -67,6 +67,9 @@ else:
     with zipfile.ZipFile(output) as archive:
         if archive.testzip() is not None or archive.namelist() != [item['path'] for item in manifest]:
             raise SystemExit('ZIP verification failed')
-    report = {'version': version, 'artifact': output.name, 'sha256': hashlib.sha256(output.read_bytes()).hexdigest(), 'files': manifest}
+    # Stable-name alias (wp.org/GitHub latest-download convention); regenerable, so overwriting is fine.
+    alias = output.with_name('lingora.zip')
+    alias.write_bytes(output.read_bytes())
+    report = {'version': version, 'artifact': output.name, 'sha256': hashlib.sha256(output.read_bytes()).hexdigest(), 'alias': alias.name, 'files': manifest}
     output.with_suffix('.manifest.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     print(json.dumps({'artifact': str(output), 'version': version, 'files': len(manifest), 'sha256': report['sha256']}, indent=2))
