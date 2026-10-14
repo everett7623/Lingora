@@ -56,12 +56,16 @@ class Lingora_Admin {
 		wp_enqueue_style( 'lingora-admin', LINGORA_URL . 'admin/css/admin.css', array(), LINGORA_VERSION );
 		wp_enqueue_script( 'lingora-admin', LINGORA_URL . 'admin/js/admin.js', array( 'wp-i18n' ), LINGORA_VERSION, true );
 		wp_set_script_translations( 'lingora-admin', 'lingora', LINGORA_PATH . 'languages' );
+		$flag_urls = array();
+		foreach ( array_merge( Lingora_Languages::catalog(), $this->options->languages() ) as $language ) {
+			$flag_urls[ $language['code'] ] = esc_url_raw( Lingora_Flags::asset_url( $language['code'], (string) ( $language['flag'] ?? '' ) ) );
+		}
 		wp_localize_script(
 			'lingora-admin',
 			'lingoraAdmin',
 			array(
 				'restUrl'      => esc_url_raw( rest_url( 'lingora/v1/' ) ),
-				'flagBaseUrl'  => esc_url_raw( LINGORA_URL . 'public/vendor/flag-icons/4x3/' ),
+				'flagUrls'     => $flag_urls,
 				'nonce'        => wp_create_nonce( 'wp_rest' ),
 					'page'         => sanitize_key( $_GET['page'] ?? 'lingora' ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 					'siteUrl'      => home_url( '/' ),

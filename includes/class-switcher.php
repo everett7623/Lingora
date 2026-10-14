@@ -33,7 +33,7 @@ class Lingora_Switcher {
 	public function enqueue(): void {
 		wp_enqueue_style(
 			'lingora-frontend',
-			LINGORA_URL . 'public/css/frontend.css',
+			LINGORA_URL . 'public/css/frontend-' . LINGORA_VERSION . '.css',
 			array(),
 			LINGORA_VERSION
 		);
@@ -139,13 +139,17 @@ class Lingora_Switcher {
 		$show_flag = (bool) $this->options->get( 'switcher_show_flag', true );
 		$show_code = (bool) $this->options->get( 'switcher_show_code', true );
 		$show_name = (bool) $this->options->get( 'switcher_show_name', false );
+		// 至少保留一个文字标签，避免设置组合产生空白菜单。
+		if ( ! $show_code && ! $show_name ) {
+			$show_name = true;
+		}
 		$request   = $this->current_request_url();
 		$pos_class = $position ? ' is-' . sanitize_html_class( $position ) : '';
 		$list_id   = wp_unique_id( 'lingora-languages-' );
 
 		ob_start();
 		?>
-			<nav class="lingora-switcher lingora-skip notranslate is-<?php echo esc_attr( $style ); ?><?php echo esc_attr( $pos_class ); ?>" translate="no" aria-label="<?php esc_attr_e( '语言', 'lingora' ); ?>">
+			<nav class="lingora-switcher lingora-skip notranslate is-<?php echo esc_attr( $style ); ?><?php echo esc_attr( $pos_class ); ?>" data-lingora-version="<?php echo esc_attr( LINGORA_VERSION ); ?>" translate="no" aria-label="<?php esc_attr_e( '语言', 'lingora' ); ?>">
 				<button type="button" class="lingora-switcher__current" aria-expanded="false" aria-controls="<?php echo esc_attr( $list_id ); ?>" aria-label="<?php echo esc_attr( sprintf( /* translators: %s: current language */ __( '切换语言，当前为%s', 'lingora' ), $this->languages->label( $current ) ) ); ?>">
 				<?php if ( $show_flag ) : ?>
 					<?php echo Lingora_Flags::markup( $current, $this->languages->flag( $current ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
@@ -172,6 +176,7 @@ class Lingora_Switcher {
 							hreflang="<?php echo esc_attr( $code ); ?>"
 							lang="<?php echo esc_attr( $code ); ?>"
 							data-lingora-lang="<?php echo esc_attr( $code ); ?>"
+							aria-label="<?php echo esc_attr( $this->languages->label( $code ) ); ?>"
 						>
 							<?php if ( $show_flag ) : ?>
 								<?php echo Lingora_Flags::markup( $code, $this->languages->flag( $code ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
@@ -180,7 +185,7 @@ class Lingora_Switcher {
 								<span class="lingora-switcher__code"><?php echo esc_html( $this->languages->iso_label( $code ) ); ?></span>
 							<?php endif; ?>
 							<?php if ( $show_name ) : ?>
-								<span class="lingora-switcher__name"><?php echo esc_html( (string) ( $lang['native'] ?? $lang['name'] ) ); ?></span>
+								<span class="lingora-switcher__name"><?php echo esc_html( $this->languages->label( $code ) ); ?></span>
 							<?php endif; ?>
 						</a>
 					</li>

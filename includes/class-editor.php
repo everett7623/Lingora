@@ -65,7 +65,7 @@ class Lingora_Editor {
 		if ( ! self::is_active() || ! Lingora_Content::is_public_request() ) {
 			return;
 		}
-		wp_enqueue_style( 'lingora-editor', LINGORA_URL . 'public/css/frontend.css', array(), LINGORA_VERSION );
+		wp_enqueue_style( 'lingora-editor', LINGORA_URL . 'public/css/frontend-' . LINGORA_VERSION . '.css', array(), LINGORA_VERSION );
 		wp_enqueue_script( 'lingora-editor', LINGORA_URL . 'public/js/editor.js', array( 'wp-i18n' ), LINGORA_VERSION, true );
 		wp_set_script_translations( 'lingora-editor', 'lingora', LINGORA_PATH . 'languages' );
 		$targets = array();

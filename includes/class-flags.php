@@ -41,28 +41,32 @@ class Lingora_Flags {
 	);
 
 	public static function country( string $code ): string {
-		$code = strtolower( $code );
-		return self::COUNTRY[ $code ] ?? substr( $code, 0, 2 );
+		$code = strtolower( str_replace( '_', '-', $code ) );
+		if ( str_contains( $code, '-' ) && preg_match( '/-([a-z]{2})$/', $code, $match ) ) {
+			return $match[1];
+		}
+		return self::COUNTRY[ $code ] ?? self::COUNTRY[ explode( '-', $code )[0] ] ?? 'xx';
 	}
 
 	public static function iso_label( string $code ): string {
-		$map = array(
-			'zh-tw' => 'ZH',
-			'pt-br' => 'BR',
-		);
-		$code = strtolower( $code );
-		return $map[ $code ] ?? strtoupper( $code );
+		return strtoupper( str_replace( '_', '-', $code ) );
 	}
 
-	public static function markup( string $code, string $flag = '' ): string {
+	public static function asset_url( string $code, string $flag = '' ): string {
 		$country = strtolower( $flag !== '' ? $flag : self::country( $code ) );
 		if ( 1 !== preg_match( '/^[a-z]{2}$/', $country ) ) {
 			$country = self::country( $code );
 		}
-		$src = LINGORA_URL . 'public/vendor/flag-icons/4x3/' . $country . '.svg';
+		if ( ! is_file( LINGORA_PATH . 'public/vendor/flag-icons/4x3/' . $country . '.svg' ) ) {
+			$country = 'xx';
+		}
+		return LINGORA_URL . 'public/vendor/flag-icons/4x3/' . $country . '.svg';
+	}
+
+	public static function markup( string $code, string $flag = '' ): string {
 		return sprintf(
 			'<img class="lingora-flag" src="%s" width="20" height="15" alt="" aria-hidden="true" decoding="async">',
-			esc_url( $src ),
+			esc_url( self::asset_url( $code, $flag ) )
 		);
 	}
 }

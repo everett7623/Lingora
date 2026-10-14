@@ -23,6 +23,8 @@ if len(set(versions)) != 1:
 version = versions[0]
 if not re.fullmatch(r'\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?', version):
     raise SystemExit('Invalid release version')
+if not (ROOT / 'public' / 'css' / f'frontend-{version}.css').is_file():
+    raise SystemExit('The frontend CSS filename must match the release version to invalidate static caches')
 paths = [ROOT / f for f in ('lingora.php', 'uninstall.php', 'readme.txt', 'LICENSE')]
 allowed = {'.php', '.css', '.js', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.po', '.mo', '.pot', '.json', '.txt'}
 for directory in ('admin', 'includes', 'public', 'assets', 'languages'):

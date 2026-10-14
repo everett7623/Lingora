@@ -218,7 +218,7 @@ class Lingora_Languages {
 
 	public function label( string $code ): string {
 		$item = $this->find( $code );
-		return $item['native'] ?? $item['name'] ?? $code;
+		return (string) ( ! empty( $item['native'] ) ? $item['native'] : ( ! empty( $item['name'] ) ? $item['name'] : $code ) );
 	}
 
 	public function locale( string $code ): string {

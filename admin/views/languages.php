@@ -51,7 +51,7 @@ $hero_example = sprintf(
 	<div class="lingora-toolbar">
 		<div class="lingora-field lingora-field--inline lingora-language-picker__field">
 			<span id="lingora-add-language-label"><?php esc_html_e( '添加语言', 'lingora' ); ?></span>
-			<select id="lingora-add-language" class="lingora-input lingora-language-picker__native">
+			<select id="lingora-add-language" class="lingora-input lingora-language-picker__native" aria-labelledby="lingora-add-language-label">
 				<option value=""><?php esc_html_e( '从目录选择…', 'lingora' ); ?></option>
 				<?php foreach ( $catalog as $item ) : ?>
 					<option value="<?php echo esc_attr( $item['code'] ); ?>"><?php echo esc_html( $item['native'] . ' — ' . $item['name'] ); ?></option>

@@ -4,7 +4,7 @@ Tags: translation, multilingual, ai, language, i18n
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.0.8
+Stable tag: 0.0.10
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -67,6 +67,15 @@ Check that the language is enabled, the page is public, the URL is not excluded,
 No. This release is for single-site installations.
 
 == Changelog ==
+
+= 0.0.10 =
+* Use a versioned frontend CSS filename so themes removing query parameters cannot reuse cached styles from older releases.
+
+= 0.0.9 =
+* Replace simulated flags with bundled SVG country flags and support regional language codes.
+* Fix theme navigation styles hiding language labels, dropdown positioning, and footer initialization.
+* Improve the searchable admin language picker, keyboard focus, and legacy flag records.
+* Update asset versions and ship the complete flag resources and license in the installation ZIP.
 
 = 0.0.8 =
 * Fix language prefix stripping on root (non-subdirectory) installs; language pages no longer 404.

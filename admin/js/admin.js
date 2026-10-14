@@ -305,11 +305,10 @@
   }
 
   function flagHtml(lang, className) {
-    const country = /^[a-z]{2}$/.test(String(lang.flag || '').toLowerCase())
-      ? String(lang.flag).toLowerCase() : '';
-    if (!country || !cfg.flagBaseUrl) return '';
+    const src = cfg.flagUrls && cfg.flagUrls[lang.code];
+    if (!src) return '';
     return '<img class="' + escapeHtml(className || 'lingora-country-flag') + '" src="' +
-      escapeHtml(cfg.flagBaseUrl + country + '.svg') + '" width="24" height="18" alt="" aria-hidden="true">';
+      escapeHtml(src) + '" width="24" height="18" alt="" aria-hidden="true">';
   }
 
   function initLanguages() {
@@ -329,7 +328,7 @@
         '<span id="lingora-language-picker-value">' + escapeHtml(__('从目录选择…', 'lingora')) + '</span><span class="lingora-language-picker__chevron" aria-hidden="true"></span></button>' +
         '<div class="lingora-language-picker__menu" id="lingora-language-options" hidden>' +
         '<input type="search" class="lingora-language-picker__search" placeholder="' + escapeHtml(__('搜索语言或代码…', 'lingora')) + '" aria-label="' + escapeHtml(__('搜索语言', 'lingora')) + '">' +
-        '<div class="lingora-language-picker__options" role="listbox"></div></div>';
+        '<div class="lingora-language-picker__options" role="group" aria-label="' + escapeHtml(__('可添加的语言', 'lingora')) + '"></div></div>';
       nativePicker.hidden = true;
       nativePicker.insertAdjacentElement('afterend', picker);
       const button = picker.querySelector('.lingora-language-picker__button');
@@ -373,6 +372,9 @@
           options[next].focus();
         }
       });
+      picker.addEventListener('focusout', function (event) {
+        if (!picker.contains(event.relatedTarget)) closePicker(false);
+      });
       document.addEventListener('click', function (event) {
         if (!picker.contains(event.target)) closePicker(false);
       });
@@ -389,7 +391,7 @@
       });
       options.innerHTML = matches.map(function (lang) {
         const exists = languages.some(function (item) { return item.code === lang.code; });
-        return '<button type="button" role="option" class="lingora-language-picker__option" data-language-code="' + escapeHtml(lang.code) + '"' + (exists ? ' disabled aria-disabled="true"' : '') + '>' +
+        return '<button type="button" class="lingora-language-picker__option" data-language-code="' + escapeHtml(lang.code) + '"' + (exists ? ' disabled aria-disabled="true"' : '') + '>' +
           flagHtml(lang) + '<span><strong>' + escapeHtml(lang.native) + '</strong><small>' + escapeHtml(lang.name) + '</small></span>' +
           '<code>' + escapeHtml(lang.code.toUpperCase()) + '</code></button>';
       }).join('') || '<p class="lingora-language-picker__empty">' + escapeHtml(__('没有匹配的语言', 'lingora')) + '</p>';
@@ -455,6 +457,8 @@
     initLanguagePicker();
     save.addEventListener('click', async function () {
       if (save.disabled) return;
+      picker.querySelector('.lingora-language-picker__menu').hidden = true;
+      picker.querySelector('.lingora-language-picker__button').setAttribute('aria-expanded', 'false');
       panel.querySelectorAll('button, input, select').forEach(function (el) { el.disabled = true; });
       panel.setAttribute('aria-busy', 'true');
       try {

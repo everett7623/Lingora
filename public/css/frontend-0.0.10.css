@@ -1,4 +1,5 @@
-:root {
+/* 文件名随发布版本更新，避免移除 ver 参数后命中旧静态资源。 */
+.lingora-switcher {
   --lingora-text: #17211d;
   --lingora-muted: #52615b;
   --lingora-line: #d9e2de;
@@ -40,7 +41,7 @@
   align-items: center;
 }
 
-.lingora-switcher__current {
+.lingora-switcher .lingora-switcher__current {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -53,9 +54,14 @@
   cursor: pointer;
   font: inherit;
   letter-spacing: 0.04em;
+  box-sizing: border-box;
+  margin: 0;
+  text-decoration: none;
+  text-transform: none;
+  box-shadow: none;
 }
 
-.lingora-switcher__current::after {
+.lingora-switcher .lingora-switcher__current::after {
   width: 6px;
   height: 6px;
   margin-left: 2px;
@@ -66,7 +72,7 @@
   transition: transform 160ms ease;
 }
 
-.lingora-switcher__current[aria-expanded="true"]::after {
+.lingora-switcher .lingora-switcher__current[aria-expanded="true"]::after {
   transform: translateY(2px) rotate(225deg);
 }
 
@@ -74,18 +80,21 @@
   border-radius: 999px;
 }
 
-.lingora-switcher__current:hover,
-.lingora-switcher__current:focus-visible {
+.lingora-switcher .lingora-switcher__current:hover,
+.lingora-switcher .lingora-switcher__current:focus-visible {
   border-color: var(--lingora-accent);
   background: var(--lingora-hover);
   outline: 2px solid transparent;
 }
 
-.lingora-switcher__list {
+.lingora-switcher .lingora-switcher__list {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
   min-width: 148px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  max-height: min(320px, calc(100vh - 100px));
   margin: 0;
   padding: 8px 0;
   list-style: none;
@@ -94,8 +103,26 @@
   border-radius: 12px;
   color: var(--lingora-text);
   box-shadow: 0 14px 36px rgba(14, 39, 31, 0.16);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+  text-align: start;
   z-index: 20;
+}
+
+.lingora-switcher .lingora-switcher__list[hidden] {
+  display: none !important;
+}
+
+.lingora-switcher .lingora-switcher__list:not([hidden]) {
+  display: block !important;
+}
+
+.lingora-switcher.is-top-left .lingora-switcher__list,
+.lingora-switcher.is-bottom-left .lingora-switcher__list {
+  left: 0;
+  right: auto;
 }
 
 .lingora-switcher.is-floating .lingora-switcher__list {
@@ -104,47 +131,65 @@
 }
 
 .lingora-switcher.is-floating.is-top-right .lingora-switcher__list,
+.lingora-switcher.is-floating.is-top-left .lingora-switcher__list,
 .lingora-switcher.is-nav .lingora-switcher__list {
   top: calc(100% + 8px);
   bottom: auto;
 }
 
-.lingora-switcher__list li {
+.lingora-switcher .lingora-switcher__list > li {
+  position: static;
+  display: block;
+  float: none;
   margin: 0;
+  padding: 0;
+  border: 0;
+  list-style: none;
 }
 
-.lingora-switcher__list a {
+.lingora-switcher .lingora-switcher__list > li > a {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 8px 14px;
   min-height: 38px;
   box-sizing: border-box;
-  color: var(--lingora-text);
+  /* 主题 Header 的导航链接颜色不能覆盖白色语言菜单。 */
+  color: var(--lingora-text) !important;
+  background: var(--lingora-bg) !important;
+  font: inherit;
+  line-height: 1.4;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
   text-decoration: none;
   white-space: nowrap;
 }
 
-.lingora-switcher__list a:hover,
-.lingora-switcher__list a:focus-visible {
-  background: var(--lingora-hover);
-  color: #064f42;
-  outline: 2px solid transparent;
+.lingora-switcher .lingora-switcher__list > li > a:hover,
+.lingora-switcher .lingora-switcher__list > li > a:focus-visible {
+  background: var(--lingora-hover) !important;
+  color: #064f42 !important;
 }
 
-.lingora-switcher__code {
+.lingora-switcher .lingora-switcher__code {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  color: inherit !important;
 }
 
-.lingora-switcher__name {
+.lingora-switcher .lingora-switcher__name {
   font-size: 13px;
   font-weight: 400;
+  color: inherit !important;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
-.lingora-flag {
+.lingora-switcher .lingora-flag {
   display: block;
   width: 20px;
   height: 15px;
@@ -152,6 +197,24 @@
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18);
   object-fit: cover;
   flex: 0 0 20px;
+  min-width: 20px;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  vertical-align: middle;
+}
+
+.lingora-switcher .lingora-switcher__current:focus-visible,
+.lingora-switcher .lingora-switcher__list > li > a:focus-visible {
+  outline: 2px solid var(--lingora-accent);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lingora-switcher .lingora-switcher__current::after {
+    transition: none;
+  }
 }
 
 .lingora-node,
@@ -264,5 +327,7 @@
 
 @media (max-width: 640px) {
   .lingora-switcher.is-top-right { right: 12px; top: 12px; }
+  .lingora-switcher.is-top-left { left: 12px; top: 12px; }
   .admin-bar .lingora-switcher.is-top-right { top: 56px; }
+  .admin-bar .lingora-switcher.is-top-left { top: 56px; }
 }
